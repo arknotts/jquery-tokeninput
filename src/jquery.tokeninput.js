@@ -27,6 +27,7 @@ var DEFAULT_SETTINGS = {
     prePopulate: null,
     processPrePopulate: false,
     animateDropdown: true,
+    formatToken: null,
     onResult: null,
     onAdd: null,
     onDelete: null
@@ -344,9 +345,17 @@ $.TokenList = function (input, url_or_data, settings) {
 
     // Inner function to a token to the list
     function insert_token(id, value) {
-        var this_token = $("<li><p>"+ value +"</p></li>")
-          .addClass(settings.classes.token)
-          .insertBefore(input_token);
+    	var this_token = $("<li></li>").addClass(settings.classes.token);
+    	
+    	//use custom format tag function if supplied
+    	if(settings.formatToken) {
+    		this_token.append(settings.formatToken(value));
+    	}
+    	else { //use default
+	        this_token.append($("<p>"+ value +"</p>"));
+    	}
+    	
+    	this_token.insertBefore(input_token);
 
         // The 'delete token' button
         $("<span>" + settings.deleteText + "</span>")
