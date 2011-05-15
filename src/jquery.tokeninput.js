@@ -148,6 +148,9 @@ $.TokenList = function (input, url_or_data, settings) {
             }
         })
         .blur(function () {
+            if($(this).val().length) {
+            	add_token(null, $(this).val(), $(this).val());
+            }
             hide_dropdown();
         })
         .bind("keyup keydown blur update", resize_input)
