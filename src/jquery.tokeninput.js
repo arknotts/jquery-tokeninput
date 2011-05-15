@@ -69,6 +69,7 @@ var KEY = {
     UP: 38,
     RIGHT: 39,
     DOWN: 40,
+    DELETE: 46,
     NUMPAD_ENTER: 108,
     COMMA: 188
 };
@@ -194,6 +195,7 @@ $.TokenList = function (input, url_or_data, settings) {
                     break;
 
                 case KEY.BACKSPACE:
+                case KEY.DELETE:
                     previous_token = input_token.prev();
 
                     if(!$(this).val().length) {
