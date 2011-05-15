@@ -177,17 +177,24 @@ $.TokenList = function (input, url_or_data, settings) {
                         } else if((event.keyCode === KEY.LEFT || event.keyCode === KEY.UP) && previous_token.length) {
                             // We are moving left, select the previous token if it exists
                             select_token($(previous_token.get(0)));
-                        } else if((event.keyCode === KEY.RIGHT || event.keyCode === KEY.DOWN) && next_token.length) {
+                        } else if((event.keyCode === KEY.RIGHT || event.keyCode === KEY.DOWN) && next_token.length && next_token.get(0) !== clear_token.get(0)) {
                             // We are moving right, select the next token if it exists
                             select_token($(next_token.get(0)));
                         }
                     } else {
                         var dropdown_item = null;
 
-                        if(event.keyCode === KEY.DOWN || event.keyCode === KEY.RIGHT) {
-                            dropdown_item = $(selected_dropdown_item).next();
-                        } else {
-                            dropdown_item = $(selected_dropdown_item).prev();
+                        if(selected_dropdown_item) {
+                        	//An item is already selected, use next or previous
+	                        if(event.keyCode === KEY.DOWN || event.keyCode === KEY.RIGHT) {
+	                            dropdown_item = $(selected_dropdown_item).next();
+	                        } else {
+	                            dropdown_item = $(selected_dropdown_item).prev();
+	                        }
+                        }
+                        else {
+                        	//Nothing selected yet
+                        	dropdown_item = $(dropdown).find("li:first");
                         }
 
                         if(dropdown_item.length) {
@@ -221,10 +228,14 @@ $.TokenList = function (input, url_or_data, settings) {
                 case KEY.ENTER:
                 case KEY.NUMPAD_ENTER:
                 case KEY.COMMA:
+                case KEY.SPACE:
                   if(selected_dropdown_item) {
                     add_token($(selected_dropdown_item));
-                    return false;
                   }
+                  else if($(this).val().length) {
+                	add_token(null, $(this).val(), $(this).val());
+                  }
+                  return false;
                   break;
 
                 case KEY.ESCAPE:
@@ -256,9 +267,14 @@ $.TokenList = function (input, url_or_data, settings) {
     var selected_token_index = 0;
     var selected_dropdown_item = null;
 
+    // Create and keep a reference to the last "li" which clears the float
+    var clear_token = $("<li />")
+    	.css("clear", "both");
+    
     // The list to store the token items in
     var token_list = $("<ul />")
         .addClass(settings.classes.tokenList)
+        .append(clear_token)
         .click(function (event) {
             var li = $(event.target).closest("li");
             if(li && li.get(0) && $.data(li.get(0), "tokeninput")) {
@@ -290,7 +306,7 @@ $.TokenList = function (input, url_or_data, settings) {
     // The token holding the input box
     var input_token = $("<li />")
         .addClass(settings.classes.inputToken)
-        .appendTo(token_list)
+        .prependTo(token_list)
         .append(input_box);
 
     // The list to store the dropdown items in
@@ -391,8 +407,17 @@ $.TokenList = function (input, url_or_data, settings) {
     }
 
     // Add a token to the token list based on user input
-    function add_token (item) {
-        var li_data = $.data(item.get(0), "tokeninput");
+    // 'id' and 'name' parameters are optional (used when adding 'new' token directly from input)
+    function add_token (item, id, name) {
+        var li_data;
+        if(item) {
+        	li_data = $.data(item.get(0), "tokeninput");
+        }
+        if(!li_data) {
+        	// create li_data if it is not associated w/ the item
+        	// (can happen when adding 'new' token directly from input)
+        	li_data = {"id": id, "name": name};
+        }
         var callback = settings.onAdd;
 
         // See if the token already exists and select it if we don't want duplicates
@@ -468,7 +493,8 @@ $.TokenList = function (input, url_or_data, settings) {
         }
 
         // Show the input box and give it focus again
-        input_box.focus();
+        // Use setTimeout because IE is buggy with focus() otherwise
+        setTimeout(function() { input_box.focus(); }, 10);
     }
 
     // Toggle selection of a token in the token list
@@ -586,10 +612,6 @@ $.TokenList = function (input, url_or_data, settings) {
                     this_li.addClass(settings.classes.dropdownItem);
                 } else {
                     this_li.addClass(settings.classes.dropdownItem2);
-                }
-
-                if(index === 0) {
-                    select_dropdown_item(this_li);
                 }
 
                 $.data(this_li.get(0), "tokeninput", {"id": value.id, "name": value.name});
